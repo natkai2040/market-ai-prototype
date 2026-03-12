@@ -1,0 +1,7 @@
+[
+  {"id": 1, "date": "2025-01-10", "price": 160, "listing_type": "unsold", "condition": "VG", "platform": "eBay", "description": "Collector copy with sleeve wear"},
+  {"id": 2, "date": "2025-02-05", "price": 175, "listing_type": "sale", "condition": "NM", "platform": "Discogs", "description": "Near mint pressing"},
+  {"id": 3, "date": "2025-02-20", "price": 220, "listing_type": "auction", "condition": "VG+", "platform": "eBay", "description": "Auction bidding war"},
+  {"id": 4, "date": "2025-03-01", "price": 165, "listing_type": "obo", "condition": "VG", "platform": "eBay", "description": "Best offer accepted"},
+  {"id": 5, "date": "2025-03-18", "price": 180, "listing_type": "sale", "condition": "NM", "platform": "Discogs", "description": "Clean copy with insert"}
+]
