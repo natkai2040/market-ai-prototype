@@ -1,4 +1,4 @@
-import { CONDITION_COLORS, PLATFORM_COLORS } from "./legend.js";
+import { CONDITION_COLORS, getPlatformColors } from "./legend.js";
 
 function symbolType(type) {
   if (type === "sale") return d3.symbolCircle;
@@ -47,6 +47,9 @@ export function drawChart(data) {
     .domain(conditionOrder)
     .range(conditionOrder.map((c) => CONDITION_COLORS[c] || "gray"));
 
+  const platforms = [...new Set(data.map((d) => d.platform))];
+  const platformColors = getPlatformColors(platforms);
+
   drawUncertainty(svg, data, y, width, height);
 
   drawMedianLine(svg, data, x, y, width);
@@ -65,7 +68,7 @@ export function drawChart(data) {
       d3.symbol().type(symbolType(d.listing_type)).size(120)()
     )
     .attr("fill", (d) => colorScale(d.condition))
-    .attr("stroke", (d) => PLATFORM_COLORS[d.platform] || "#333")
+    .attr("stroke", (d) => platformColors[d.platform] ?? "#333")
     .attr("stroke-width", 2)
     .on("mouseover", (event, d) => {
       tooltip

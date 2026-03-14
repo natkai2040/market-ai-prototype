@@ -6,10 +6,29 @@ const CONDITION_COLORS = {
   G: "gray",
 };
 
-const PLATFORM_COLORS = {
-  eBay: "#e53238",
-  Discogs: "#2d2d2d",
-};
+// Known platforms get fixed colors; others get colors from this palette
+const PLATFORM_PALETTE = [
+  "#e53238", // eBay red
+  "#2d2d2d", // Discogs dark
+  "#f56400", // Etsy orange
+  "#ff9900", // Amazon
+  "#4267b2", // Facebook blue
+  "#25d366", // WhatsApp green
+  "#7c3aed", // generic purple
+  "#0ea5e9", // generic sky
+  "#64748b", // slate
+];
+
+function getPlatformColors(platforms) {
+  const known = { eBay: "#e53238", Discogs: "#2d2d2d", Etsy: "#f56400", Amazon: "#ff9900", "Facebook Marketplace": "#4267b2" };
+  const order = [...new Set(platforms)];
+  const scale = {};
+  let paletteIndex = 0;
+  order.forEach((p) => {
+    scale[p] = known[p] ?? PLATFORM_PALETTE[paletteIndex++ % PLATFORM_PALETTE.length];
+  });
+  return scale;
+}
 
 function getSymbol(type) {
   if (type === "sale") return "●";
@@ -29,6 +48,7 @@ export function drawLegend(data) {
   const listingTypes = [...new Set(data.map((d) => d.listing_type))];
   const conditions = [...new Set(data.map((d) => d.condition))];
   const platforms = [...new Set(data.map((d) => d.platform))];
+  const platformColors = getPlatformColors(platforms);
 
   const shapeLegend = container.append("div").attr("class", "legend-block");
   shapeLegend.append("div").text("Listing type");
@@ -58,9 +78,9 @@ export function drawLegend(data) {
       .append("span")
       .attr("class", "legend-symbol")
       .style("background", "transparent")
-      .style("border", `2px solid ${PLATFORM_COLORS[platform] || "#666"}`);
+      .style("border", `2px solid ${platformColors[platform] ?? "#666"}`);
     item.append("span").text(platform);
   });
 }
 
-export { getColor, getSymbol, CONDITION_COLORS, PLATFORM_COLORS };
+export { getColor, getSymbol, getPlatformColors, CONDITION_COLORS, PLATFORM_PALETTE };

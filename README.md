@@ -7,7 +7,7 @@ A research-style prototype for visualizing collectible marketplace data with eve
 - **Event-based D3 chart**: Time series of prices with:
   - **Shapes by listing type**: circle (sale/unsold), triangle (auction), diamond (obo)
   - **Fill by condition**: color scale for Mint / NM / VG+ / VG / G
-  - **Outline by platform**: eBay vs Discogs (marketplace comparison)
+  - **Outline by platform**: marketplace comparison (eBay, Discogs, Etsy, Amazon, etc.; any platform gets a distinct color from the palette)
   - **Median price line**: dashed horizontal line with label
   - **Uncertainty band**: “Possible market range” shaded area
 - **Auto-generated legends** for listing type, condition, and platform
@@ -61,23 +61,49 @@ Then open:
 
 - `id`, `date`, `price`, `listing_type`, `condition`, `platform`, `description`
 
-Listing types used in the chart: `sale`, `unsold`, `auction`, `obo`. Condition and platform are used for encoding and legends.
+Listing types used in the chart: `sale`, `unsold`, `auction`, `obo`. Condition and platform are used for encoding and legends. Add any platforms you need in the data; each gets a distinct outline color (known ones like eBay, Discogs, Etsy, Amazon have fixed colors; others use the palette).
 
 ## Publishing to GitHub
 
-To publish this prototype as its own repository:
+### Option A: Create the repo on GitHub first, then push
+
+1. **Create the repo in your browser**  
+   - Open **[github.com/new](https://github.com/new)**  
+   - Repository name: `market-ai-prototype` (or any name you like)  
+   - Leave **“Add a README”** and **“.gitignore”** **unchecked** (empty repo)  
+   - Click **Create repository**
+
+2. **Confirm the repo exists**  
+   - Visit `https://github.com/TomWang22/market-ai-prototype` (use your real username).  
+   - If you get 404, the repo wasn’t created or the name/owner is different.
+
+3. **Push from your machine** (from inside `market-ai-prototype`):
 
 ```bash
-cd market-ai-prototype
-git init
-git add .
-git commit -m "Initial commit: collectible market signals prototype"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/market-ai-prototype.git
+git remote set-url origin https://github.com/TomWang22/market-ai-prototype.git
 git push -u origin main
 ```
 
-Create the repository on GitHub first (empty, no README), then run the commands above. Everyone can clone and run with `python server.py` after cloning.
+If your GitHub username or repo name is different, use that URL. Replace `TomWang22` with your actual username.
+
+### Option B: Create repo and push in one step (GitHub CLI)
+
+If you have [GitHub CLI](https://cli.github.com/) installed and logged in (`gh auth login`):
+
+```bash
+cd market-ai-prototype
+gh repo create market-ai-prototype --public --source=. --remote=origin --push
+```
+
+That creates the repo on GitHub and pushes `main` for you.
+
+### If you still get “Repository not found”
+
+- **Wrong username:** Your GitHub profile URL is `https://github.com/USERNAME` — use that `USERNAME` in the remote URL.  
+- **Wrong repo name:** Use the exact name shown on the repo page.  
+- **Not logged in:** Run `gh auth login` or ensure Git has credentials (e.g. credential helper or SSH key).  
+- **Private repo + HTTPS:** Try `gh auth login` or switch to SSH:  
+  `git remote set-url origin git@github.com:TomWang22/market-ai-prototype.git` then `git push -u origin main`.
 
 ## License
 

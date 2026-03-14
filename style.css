@@ -33,6 +33,8 @@ body {
   height: 14px;
   margin-right: 6px;
   display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 
 #tooltip {
