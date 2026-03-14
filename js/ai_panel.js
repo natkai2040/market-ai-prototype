@@ -1,59 +1,155 @@
-export function loadAI(condition) {
+/**
+ * Renders the AI interpretation panel according to condition.
+ * Interpretation is supplied from either the LLM inference API or the rule-based engine.
+ * - control: opaque summary only.
+ * - inspectable: full interpretation with evidence, assumptions, limitations, alternatives.
+ * - contestable: cognitive forcing — user records interpretation first, then reveal/hide AI, etc.
+ */
+export function loadAI(condition, interpretation) {
   const panel = document.getElementById("interpretation");
+  if (!panel || !interpretation) return;
+
+  const alts = interpretation.alternatives && interpretation.alternatives.length ? interpretation.alternatives : ["No alternative view generated."];
 
   if (condition === "control") {
     panel.innerHTML = `
-<h3>AI Summary</h3>
-<p>Recent marketplace signals suggest
-a typical value around <b>$180</b>.</p>
-`;
+      <h3>Interpretation</h3>
+      <p class="interpretation-summary">${interpretation.summary}</p>
+      <p class="interpretation-note">This system supports interpretation, not recommendation. It does not tell you what to buy or what price is "correct."</p>
+    `;
     return;
   }
 
   if (condition === "inspectable") {
     panel.innerHTML = `
-<h3>AI Interpretation</h3>
-
-<b>Evidence</b>
-<ul>
-<li>Auction sale: $220</li>
-<li>Confirmed sales: $175–180</li>
-<li>Unsold listing: $160</li>
-</ul>
-
-<b>Assumptions</b>
-<ul>
-<li>Auctions reflect collector demand</li>
-<li>Listings reflect seller expectations</li>
-</ul>
-
-<b>Limitations</b>
-<ul>
-<li>Sparse data</li>
-<li>Condition differences</li>
-</ul>
-`;
+      <h3>Interpretation</h3>
+      <p class="interpretation-summary">${interpretation.summary}</p>
+      <section class="interpretation-section">
+        <h4>Evidence</h4>
+        <ul>${interpretation.evidence.map((e) => `<li>${e}</li>`).join("")}</ul>
+      </section>
+      <section class="interpretation-section">
+        <h4>Assumptions</h4>
+        <ul>${interpretation.assumptions.map((a) => `<li>${a}</li>`).join("")}</ul>
+      </section>
+      <section class="interpretation-section">
+        <h4>Limitations</h4>
+        <ul>${interpretation.limitations.map((l) => `<li>${l}</li>`).join("")}</ul>
+      </section>
+      <section class="interpretation-section">
+        <h4>Alternative view</h4>
+        <p>${alts[0]}</p>
+      </section>
+    `;
     return;
   }
 
   if (condition === "contestable") {
-    panel.innerHTML = `
-<h3>Your Interpretation</h3>
+    let altIndex = 0;
+    let userSubmitted = false;
+    let aiVisible = false;
 
-<textarea id="userText" rows="4" cols="60" placeholder="Add your own interpretation..."></textarea>
+    function renderContestable() {
+      let html = `
+        <h3>Your interpretation</h3>
+        <p class="interpretation-hint">Record your own reading of the data before seeing the system’s interpretation. This step is required to continue.</p>
+        <textarea id="userInterpretation" rows="4" placeholder="What do you notice about prices, platforms, and listing types? What might explain the range?"></textarea>
+        <div class="contestable-actions">
+          <button type="button" id="submit-user">Submit my interpretation</button>
+        </div>
+        <div id="contestable-ai-block" class="hidden">
+          <hr>
+          <h3>System interpretation</h3>
+          <div class="contestable-ai-toolbar">
+            <button type="button" id="toggle-ai">Hide system interpretation</button>
+            <button type="button" id="alternative-btn">Request alternative explanation</button>
+            <a href="#" id="raw-data-link">View raw data table</a>
+          </div>
+          <div id="contestable-ai-content">
+            <p class="interpretation-summary">${interpretation.summary}</p>
+            <section class="interpretation-section collapsible">
+              <h4 class="collapse-toggle">Assumptions <span class="collapse-icon">▼</span></h4>
+              <ul class="collapse-content hidden"><li>${interpretation.assumptions.join("</li><li>")}</li></ul>
+            </section>
+            <section class="interpretation-section collapsible">
+              <h4 class="collapse-toggle">Limitations <span class="collapse-icon">▼</span></h4>
+              <ul class="collapse-content hidden"><li>${interpretation.limitations.join("</li><li>")}</li></ul>
+            </section>
+            <section class="interpretation-section">
+              <h4>Evidence</h4>
+              <ul>${interpretation.evidence.map((e) => `<li>${e}</li>`).join("")}</ul>
+            </section>
+            <p id="alternative-text" class="alternative-explanation">${alts[0]}</p>
+          </div>
+        </div>
+      `;
+      panel.innerHTML = html;
 
-<br><br>
+      const submitBtn = document.getElementById("submit-user");
+      const textarea = document.getElementById("userInterpretation");
+      const aiBlock = document.getElementById("contestable-ai-block");
+      const toggleBtn = document.getElementById("toggle-ai");
+      const altBtn = document.getElementById("alternative-btn");
+      const altText = document.getElementById("alternative-text");
+      const rawLink = document.getElementById("raw-data-link");
 
-<button id="submit" type="button">Submit</button>
-`;
+      submitBtn.addEventListener("click", () => {
+        const text = (textarea.value || "").trim();
+        if (!text) {
+          submitBtn.setAttribute("aria-invalid", "true");
+          return;
+        }
+        userSubmitted = true;
+        submitBtn.setAttribute("aria-invalid", "false");
+        panel.querySelector(".contestable-actions").innerHTML = '<span class="user-done">Recorded. You can reveal the system interpretation below.</span>';
+        aiBlock.classList.remove("hidden");
+        aiVisible = true;
+        toggleBtn.textContent = "Hide system interpretation";
+      });
 
-    document.getElementById("submit").onclick = () => {
-      panel.innerHTML += `
-<h3>AI Interpretation</h3>
-<p>Auction price ($220) may reflect
-collector competition rather than
-typical market value.</p>
-`;
-    };
+      toggleBtn.addEventListener("click", () => {
+        aiVisible = !aiVisible;
+        document.getElementById("contestable-ai-content").classList.toggle("hidden", !aiVisible);
+        toggleBtn.textContent = aiVisible ? "Hide system interpretation" : "Show system interpretation";
+      });
+
+      altBtn.addEventListener("click", () => {
+        altIndex += 1;
+        altText.textContent = alts[altIndex % alts.length];
+      });
+
+      rawLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        const tableSection = document.getElementById("table-toggle-section");
+        const tableEl = document.getElementById("raw-table");
+        const toggleTableBtn = document.getElementById("toggle-table");
+        if (tableEl && tableEl.classList.contains("hidden") && toggleTableBtn) {
+          toggleTableBtn.click();
+        }
+        tableSection?.scrollIntoView({ behavior: "smooth" });
+      });
+
+      panel.querySelectorAll(".collapse-toggle").forEach((h) => {
+        h.addEventListener("click", () => {
+          const section = h.closest(".collapsible");
+          const content = section?.querySelector(".collapse-content");
+          const icon = section?.querySelector(".collapse-icon");
+          if (!section || !content) return;
+          section.classList.toggle("expanded");
+          content.classList.toggle("hidden", !section.classList.contains("expanded"));
+          if (icon) icon.textContent = section.classList.contains("expanded") ? "▲" : "▼";
+        });
+      });
+
+      const content = panel.querySelector("#contestable-ai-content");
+      const sections = panel.querySelectorAll(".collapsible");
+      sections.forEach((s) => {
+        s.classList.remove("expanded");
+        s.querySelector(".collapse-content")?.classList.add("hidden");
+        s.querySelector(".collapse-icon").textContent = "▼";
+      });
+    }
+
+    renderContestable();
   }
 }
