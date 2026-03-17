@@ -24,6 +24,8 @@ export async function fetchInterpretation(data) {
     assumptions: Array.isArray(out.assumptions) ? out.assumptions : [],
     limitations: Array.isArray(out.limitations) ? out.limitations : [],
     alternatives: Array.isArray(out.alternatives) ? out.alternatives : [],
+    plan: out.plan || "",
+    reasoning_steps: Array.isArray(out.reasoning_steps) ? out.reasoning_steps : [],
     median: out.median,
     saleCount: out.saleCount,
     totalCount: out.totalCount,

@@ -75,6 +75,8 @@ export function interpret(data) {
     assumptions,
     limitations,
     alternatives: altTemplates,
+    plan: "",
+    reasoning_steps: [],
     median: Math.round(med),
     saleCount: sales.length,
     totalCount: data.length,

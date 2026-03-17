@@ -11,26 +11,28 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "api"))
 
 from inference_server import (
-    _build_data_summary,
+    _build_listing_data,
     extract_json,
     interpret_with_llm,
 )
 
 
-class TestBuildDataSummary(unittest.TestCase):
+class TestBuildListingData(unittest.TestCase):
     def test_normal(self):
         data = [
             {"id": 1, "date": "2025-01-10", "price": 160, "listing_type": "unsold", "condition": "VG", "platform": "eBay"},
             {"id": 2, "date": "2025-02-05", "price": 175, "listing_type": "sale", "condition": "NM", "platform": "Discogs"},
         ]
-        summary = _build_data_summary(data)
-        self.assertIn("2", summary)
-        self.assertTrue("160" in summary or "175" in summary)
-        self.assertIn("sale", summary.lower())
-        self.assertTrue("eBay" in summary or "Discogs" in summary)
+        listing_data = _build_listing_data(data)
+        self.assertIn("160", listing_data)
+        self.assertIn("175", listing_data)
+        self.assertIn("sale", listing_data)
+        self.assertIn("eBay", listing_data)
+        self.assertIn("Discogs", listing_data)
+        self.assertIn("01-10-2025", listing_data)  # MM-DD-YYYY
 
     def test_empty(self):
-        self.assertIn("No data", _build_data_summary([]))
+        self.assertEqual(_build_listing_data([]), "[]")
 
 
 class TestExtractJson(unittest.TestCase):
@@ -68,8 +70,11 @@ class TestInterpretWithLlm(unittest.TestCase):
             self.assertIn("assumptions", result)
             self.assertIn("limitations", result)
             self.assertIn("alternatives", result)
+            self.assertIn("plan", result)
+            self.assertIn("reasoning_steps", result)
             self.assertIsInstance(result["evidence"], list)
             self.assertIsInstance(result["alternatives"], list)
+            self.assertIsInstance(result["reasoning_steps"], list)
             text = (result.get("summary") or "") + " " + " ".join(result.get("evidence") or [])
             self.assertTrue("100" in text or "sale" in text.lower() or "1" in text)
 
