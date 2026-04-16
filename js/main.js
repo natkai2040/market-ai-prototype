@@ -4,10 +4,17 @@ import { loadAI } from "./ai_panel.js";
 import { getInterpretation } from "./api.js";
 import { generateMarketData } from "./dataGenerator.js";
 
+/// PUBLIC STATE DATA ///
 const params = new URLSearchParams(window.location.search);
 const condition = params.get("condition") || "control";
 
 let currentData = [];
+let aiToggleListenerAdded = false;
+let currentInterpretation = ""; 
+let currentAiGraphData = {};
+let showAI = true;
+
+////////////////////////
 
 async function loadDemoData() {
   const data = await fetch("data/market_data.json").then((r) => r.json());
@@ -19,20 +26,34 @@ async function loadTestData(filename) {
   return data;
 }
 
+// renders chart based on public variables
 async function render(data, usePresetInterpretation = false, presetInterpretationFileName = "") {
+  // assign public variables
   currentData = data;
-  drawChart(data);
-  drawLegend(data);
-  checkSparsity(data);
-  setupRawTable(data);
 
+  // if panel exists, set loading message
   const panel = document.getElementById("interpretation");
   if (panel) {
     panel.innerHTML = "<p class=\"interpretation-loading\">Loading interpretation…</p>";
   }
-  const interpretation = await getInterpretation(data, usePresetInterpretation, presetInterpretationFileName);
-  console.log(interpretation)
-  loadAI(condition, interpretation);
+
+  // assign interpretation to public variable
+  currentInterpretation = await getInterpretation(data, usePresetInterpretation, presetInterpretationFileName);
+  
+  // extract current AI graph data and assign it to public variable
+  currentAiGraphData = {
+    "current_estimate": currentInterpretation?.current_estimate,
+    "current_high_range": currentInterpretation?.current_high_range,
+    "current_low_range": currentInterpretation?.current_low_range,
+    "current_trend": currentInterpretation?.current_trend,
+  }
+
+  drawChart(currentData, currentAiGraphData, { showAI }); // draws chart with d3
+  renderToggleAIButton() //
+  drawLegend(currentData); // sets up legend depending on the data's present marks
+  checkSparsity(currentData); 
+  setupRawTable(currentData); // sets up the table below the graph for raw data
+  loadAI(condition, currentInterpretation);
 }
 
 function checkSparsity(data) {
@@ -108,18 +129,40 @@ function setupRawTable(data) {
   }
 }
 
+function renderToggleAIButton() {
+  const toggleChartAIBtn = document.getElementById("toggle-ai-graph");
+  if (!toggleChartAIBtn) return;
+
+  toggleChartAIBtn.textContent = showAI
+    ? "Hide AI Interpretation on Chart"
+    : "Show AI Interpretation on Chart";
+
+  if (!aiToggleListenerAdded) {
+    aiToggleListenerAdded = true;
+
+    toggleChartAIBtn.addEventListener("click", () => {
+      showAI = !showAI;
+
+      toggleChartAIBtn.textContent = showAI
+        ? "Hide AI Interpretation on Chart"
+        : "Show AI Interpretation on Chart";
+
+      drawChart(currentData, currentAiGraphData, { showAI });
+    });
+  }
+}
+
 function setupDataControls() {
   const container = document.getElementById("data-controls");
   if (!container) return;
 
   container.innerHTML = `
-    <div class="data-source-label">Data source</div>
+    <div class="data-source-label">Marketplace Items</div>
     <div class="data-source-buttons">
-      <button type="button" id="load-demo">Use demo data</button>
-      <button type="button" id="load-test-7">Use grade 7 test data</button>
-      <button type="button" id="load-test-8">Use grade 8 test data</button>
-      <button type="button" id="load-test-9">Use grade 9 test data</button>
-      <button type="button" id="load-test-all-grades">Use all grades test data</button>
+      <button type="button" id="load-demo">Demo Listing</button>
+      <button type="button" id="load-test-7">Jackie Robinson (Grade 7)</button>
+      <button type="button" id="load-test-8">Jackie Robinson (Grade 8)</button>
+      <button type="button" id="load-test-9">Jackie Robinson (Grade 9)</button>
       <button type="button" id="gen-random">Generate random data</button>
     </div>
     <p class="data-source-hint">Demo data is fixed. Random data is regenerated each time (same schema).</p>
@@ -143,11 +186,6 @@ function setupDataControls() {
   document.getElementById("load-test-9").addEventListener("click", async () => {
     const data = await loadTestData("test_data/grade_9_original.json");
     await render(data, true, "grade_9_interpretation.json");
-  });
-
-  document.getElementById("load-test-all-grades").addEventListener("click", async () => {
-    const data = await loadTestData("test_data/all_grades_original.json");
-    await render(data, false, "");
   });
 
   document.getElementById("gen-random").addEventListener("click", async () => {

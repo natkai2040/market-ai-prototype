@@ -59,7 +59,7 @@
   {"date":"2026-01-01", "listing_type": "sale", "condition":"VG", "description": "", "price":824.99,"grade":7,"platform":"eBay"},
   {"date":"2026-02-01", "listing_type": "sale", "condition":"VG", "description": "", "price":744.5,"grade":7,"platform":"eBay"},
   {"date":"2026-03-01", "listing_type": "sale", "condition":"VG", "description": "", "price":730,"grade":7,"platform":"eBay"},
-    {"date":"2021-04-01", "listing_type": "sale", "condition":"VG+", "description": "", "price":901.75,"grade":8,"platform":"eBay"},
+  {"date":"2021-04-01", "listing_type": "sale", "condition":"VG+", "description": "", "price":901.75,"grade":8,"platform":"eBay"},
   {"date":"2021-05-01", "listing_type": "sale", "condition":"VG+", "description": "", "price":1836.5,"grade":8,"platform":"eBay"},
   {"date":"2021-07-01", "listing_type": "sale", "condition":"VG+", "description": "", "price":1913,"grade":8,"platform":"eBay"},
   {"date":"2021-08-01", "listing_type": "sale", "condition":"VG+", "description": "", "price":2017.72,"grade":8,"platform":"eBay"},
