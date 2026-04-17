@@ -4,6 +4,15 @@ import { loadAI } from "./ai_panel.js";
 import { getInterpretation } from "./api.js";
 import { generateMarketData } from "./dataGenerator.js";
 
+
+///////PRESET DATA////////
+const preset_test_info = [
+  {"dom-elem-id": "load-test-7", "test_name": "Jackie Robinson Card (Grade 7)", "marketplace_item_filename":"grade_7.json", "interpretation_filename": "grade_7_interpretation.json"},
+  {"dom-elem-id": "load-test-8", "test_name": "Jackie Robinson Card (Grade 8)", "marketplace_item_filename":"grade_8.json", "interpretation_filename": "grade_8_interpretation.json"},
+  {"dom-elem-id": "load-test-9", "test_name": "Jackie Robinson Card (Grade 9)", "marketplace_item_filename":"grade_9.json", "interpretation_filename": "grade_9_interpretation.json"},
+  {"dom-elem-id": "load-vinyl", "test_name": "Vinyl Record Demo", "marketplace_item_filename":"vinyl_record.json", "interpretation_filename": "vinyl_record_interpretation.json"},
+  {"dom-elem-id": "load-demo","test_name": "Demo Record", "marketplace_item_filename":"vinyl_record.json", "interpretation_filename": "none"},
+]
 /// PUBLIC STATE DATA ///
 const params = new URLSearchParams(window.location.search);
 const condition = params.get("condition") || "control";
@@ -13,7 +22,6 @@ let aiToggleListenerAdded = false;
 let currentInterpretation = ""; 
 let currentAiGraphData = {};
 let showAI = true;
-
 ////////////////////////
 
 async function loadDemoData() {
@@ -30,6 +38,12 @@ async function loadTestData(filename) {
 async function render(data, usePresetInterpretation = false, presetInterpretationFileName = "") {
   // assign public variables
   currentData = data;
+  currentAiGraphData = {}
+  drawChart(currentData, currentAiGraphData, { showAI }); // draws chart with d3
+  renderToggleAIButton()
+  drawLegend(currentData); // sets up legend depending on the data's present marks
+  setupRawTable(currentData); // sets up the table below the graph for raw data
+  checkSparsity(currentData); 
 
   // if panel exists, set loading message
   const panel = document.getElementById("interpretation");
@@ -48,11 +62,7 @@ async function render(data, usePresetInterpretation = false, presetInterpretatio
     "current_trend": currentInterpretation?.current_trend,
   }
 
-  drawChart(currentData, currentAiGraphData, { showAI }); // draws chart with d3
-  renderToggleAIButton() //
-  drawLegend(currentData); // sets up legend depending on the data's present marks
-  checkSparsity(currentData); 
-  setupRawTable(currentData); // sets up the table below the graph for raw data
+  drawChart(currentData, currentAiGraphData, { showAI }); // re-render with AI prediction
   loadAI(condition, currentInterpretation);
 }
 
@@ -102,6 +112,7 @@ function setupRawTable(data) {
       .text((d) => d.replace(/_/g, " "));
 
     table
+    
       .append("tbody")
       .selectAll("tr")
       .data(currentData)
@@ -160,6 +171,7 @@ function setupDataControls() {
     <div class="data-source-label">Marketplace Items</div>
     <div class="data-source-buttons">
       <button type="button" id="load-demo">Demo Listing</button>
+      <button type="button" id="load-vinyl">Vinyl Record</button>
       <button type="button" id="load-test-7">Jackie Robinson (Grade 7)</button>
       <button type="button" id="load-test-8">Jackie Robinson (Grade 8)</button>
       <button type="button" id="load-test-9">Jackie Robinson (Grade 9)</button>
@@ -168,25 +180,36 @@ function setupDataControls() {
     <p class="data-source-hint">Demo data is fixed. Random data is regenerated each time (same schema).</p>
   `;
 
-  document.getElementById("load-demo").addEventListener("click", async () => {
-    const data = await loadDemoData();
-    await render(data, false, "");
-  });
+  preset_test_info.forEach((test) => {
+    document.getElementById(test["dom-elem-id"]).addEventListener("click", async () => {
+      const marketplace_item = await loadTestData("test_data/"+test.marketplace_item_filename);
+      if (test.interpretation_filename == "none") {
+        await render(marketplace_item, false, "");
+      } else {
+        await render(marketplace_item, true, test.interpretation_filename);
+      }
+    });
+  })
 
-  document.getElementById("load-test-7").addEventListener("click", async () => {
-    const data = await loadTestData("test_data/grade_7_original.json");
-    await render(data, true, "grade_7_interpretation.json");
-  });
+  // document.getElementById("load-demo").addEventListener("click", async () => {
+  //   const data = await loadTestData("test_data/"+grade_7_original.json");
+  //   await render(data, false, "");
+  // });
 
-  document.getElementById("load-test-8").addEventListener("click", async () => {
-    const data = await loadTestData("test_data/grade_8_original.json");
-    await render(data, true, "grade_8_interpretation.json");
-  });
+  // document.getElementById("load-test-7").addEventListener("click", async () => {
+  //   const data = await loadTestData("test_data/grade_7_original.json");
+  //   await render(data, true, "grade_7_interpretation.json");
+  // });
 
-  document.getElementById("load-test-9").addEventListener("click", async () => {
-    const data = await loadTestData("test_data/grade_9_original.json");
-    await render(data, true, "grade_9_interpretation.json");
-  });
+  // document.getElementById("load-test-8").addEventListener("click", async () => {
+  //   const data = await loadTestData("test_data/grade_8_original.json");
+  //   await render(data, true, "grade_8_interpretation.json");
+  // });
+
+  // document.getElementById("load-test-9").addEventListener("click", async () => {
+  //   const data = await loadTestData("test_data/grade_9_original.json");
+  //   await render(data, true, "grade_9_interpretation.json");
+  // });
 
   document.getElementById("gen-random").addEventListener("click", async () => {
     const data = generateMarketData({ n: 18, seed: Date.now() % 1e6 });
@@ -196,9 +219,8 @@ function setupDataControls() {
 
 // render initially with loadDemoData
 async function init() {
-  const data = await loadDemoData();
+  // const data = await loadDemoData();
   setupDataControls();
-  render(data, false, "");
 }
 
 init();
